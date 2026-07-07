@@ -6,6 +6,10 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   check-branch:
     name: Verificar rama origen
@@ -41,3 +45,73 @@ jobs:
 
       - name: Ejecutar tests
         run: dotnet test --no-build --configuration Release --verbosity normal
+
+  gitleaks:
+    name: Gitleaks - Secret scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Buscar secretos filtrados
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL - SAST
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Restaurar dependencias
+        run: dotnet restore
+
+      - name: Build para análisis
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Analizar con CodeQL
+        uses: github/codeql-action/analyze@v4
+
+  trivy-fs:
+    name: Trivy - Dependencies & IaC
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Escanear filesystem con Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Escanear configuración Docker/IaC con Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          skip-setup-trivy: true
