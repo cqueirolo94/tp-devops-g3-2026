@@ -155,21 +155,19 @@ app.MapGet("/diagnostics/slow", async () =>
 .WithName("SimulateSlowRequest")
 .WithTags("Diagnostics");
 
-app.MapGet("/demo/codeql-file-read", (string path) =>
+app.MapGet("/demo/zap-reflected-input", (string input) =>
 {
-    var content = File.ReadAllText(path);
-
-    return Results.Text(content, "text/plain");
+    return Results.Content($"<html><body><h1>{input}</h1></body></html>", "text/html");
 })
-.WithName("DemoCodeQlFileRead")
+.WithName("DemoZapReflectedInput")
 .WithTags("Security Demo");
 
-app.MapGet("/demo/codeql-command", (string command) =>
+app.MapGet("/demo/codeql-command-injection", (string command) =>
 {
     var process = Process.Start(new ProcessStartInfo
     {
         FileName = "/bin/sh",
-        Arguments = "-c \"" + command + "\"",
+        Arguments = "-c " + command,
         RedirectStandardOutput = true
     });
 
@@ -177,14 +175,7 @@ app.MapGet("/demo/codeql-command", (string command) =>
 
     return Results.Text(output, "text/plain");
 })
-.WithName("DemoCodeQlCommand")
-.WithTags("Security Demo");
-
-app.MapGet("/demo/zap-reflected-input", (string input) =>
-{
-    return Results.Content($"<html><body><h1>{input}</h1></body></html>", "text/html");
-})
-.WithName("DemoZapReflectedInput")
+.WithName("DemoCodeQlCommandInjection")
 .WithTags("Security Demo");
 
 app.MapQuestEndpoints();
