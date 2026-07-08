@@ -1,6 +1,7 @@
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
 using DevOpsTp.Api.Quests;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -153,6 +154,38 @@ app.MapGet("/diagnostics/slow", async () =>
 })
 .WithName("SimulateSlowRequest")
 .WithTags("Diagnostics");
+
+app.MapGet("/demo/codeql-file-read", (string path) =>
+{
+    var content = File.ReadAllText(path);
+
+    return Results.Text(content, "text/plain");
+})
+.WithName("DemoCodeQlFileRead")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-command", (string command) =>
+{
+    var process = Process.Start(new ProcessStartInfo
+    {
+        FileName = "/bin/sh",
+        Arguments = "-c \"" + command + "\"",
+        RedirectStandardOutput = true
+    });
+
+    var output = process?.StandardOutput.ReadToEnd() ?? string.Empty;
+
+    return Results.Text(output, "text/plain");
+})
+.WithName("DemoCodeQlCommand")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/zap-reflected-input", (string input) =>
+{
+    return Results.Content($"<html><body><h1>{input}</h1></body></html>", "text/html");
+})
+.WithName("DemoZapReflectedInput")
+.WithTags("Security Demo");
 
 app.MapQuestEndpoints();
 
