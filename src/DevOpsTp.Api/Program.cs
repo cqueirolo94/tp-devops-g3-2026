@@ -1,6 +1,9 @@
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using DevOpsTp.Api.Quests;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +56,7 @@ builder.Services.AddOpenTelemetry()
     });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
@@ -78,6 +82,7 @@ app.UseExceptionHandler(exceptionHandlerApp =>
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapControllers();
 
 app.MapGet("/", (IWebHostEnvironment environment) =>
 {
@@ -153,6 +158,96 @@ app.MapGet("/diagnostics/slow", async () =>
 })
 .WithName("SimulateSlowRequest")
 .WithTags("Diagnostics");
+
+app.MapGet("/demo/zap-reflected-input", (string input) =>
+{
+    return Results.Content($"<html><body><h1>{input}</h1></body></html>", "text/html");
+})
+.WithName("DemoZapReflectedInput")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-command-injection", (HttpContext context) =>
+{
+    var command = context.Request.Query["command"].ToString();
+    var process = Process.Start(new ProcessStartInfo
+    {
+        FileName = "/bin/sh",
+        Arguments = "-c " + command,
+        RedirectStandardOutput = true
+    });
+
+    var output = process?.StandardOutput.ReadToEnd() ?? string.Empty;
+
+    return Results.Text(output, "text/plain");
+})
+.WithName("DemoCodeQlCommandInjection")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-path-traversal", (HttpContext context) =>
+{
+    var path = context.Request.Query["path"].ToString();
+    var content = File.ReadAllText(path);
+
+    return Results.Text(content, "text/plain");
+})
+.WithName("DemoCodeQlPathTraversal")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-insecure-random", () =>
+{
+    var token = new Random().Next(100000, 999999);
+
+    return Results.Ok(new
+    {
+        resetToken = token
+    });
+})
+.WithName("DemoCodeQlInsecureRandom")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-weak-hash", (string input) =>
+{
+    var hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+
+    return Results.Ok(new
+    {
+        hash = Convert.ToHexString(hash)
+    });
+})
+.WithName("DemoCodeQlWeakHash")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-code-quality", () =>
+{
+    var score = 0;
+    score = 100;
+
+    try
+    {
+        int.Parse("not-a-number");
+    }
+    catch
+    {
+    }
+
+    if (score == score)
+    {
+        var stream = File.OpenRead("appsettings.json");
+
+        return Results.Ok(new
+        {
+            message = "This endpoint intentionally contains code quality issues",
+            length = stream.Length
+        });
+    }
+
+    return Results.Ok(new
+    {
+        message = "Unreachable branch"
+    });
+})
+.WithName("DemoCodeQlCodeQuality")
+.WithTags("Security Demo");
 
 app.MapQuestEndpoints();
 
