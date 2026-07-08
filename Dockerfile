@@ -32,9 +32,11 @@ ENV BUILD_DATE=$BUILD_DATE
 
 WORKDIR /app
 
-# Instalamos curl para que Docker pueda validar el healthcheck.
+# Instalamos curl para que Docker pueda validar el healthcheck y creamos un usuario sin privilegios.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
+    && groupadd --system appgroup \
+    && useradd --system --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser \
     && rm -rf /var/lib/apt/lists/*
 
 # La API escucha en el puerto 8080 dentro del contenedor.
@@ -43,7 +45,10 @@ ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 # Copiamos la aplicación ya publicada desde la etapa de build.
-COPY --from=build /app/publish .
+COPY --from=build --chown=appuser:appgroup /app/publish .
+
+# Ejecutamos la API con un usuario no-root.
+USER appuser
 
 # Docker verifica periódicamente que la API responda correctamente.
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
