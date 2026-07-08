@@ -1,10 +1,14 @@
 name: CodeQL Advanced
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - develop
+      - feature/**
+      - release/**
+      - hotfix/**
   pull_request:
     branches:
       - main

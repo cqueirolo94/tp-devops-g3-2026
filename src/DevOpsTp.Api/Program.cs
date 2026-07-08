@@ -215,6 +215,38 @@ app.MapGet("/demo/codeql-weak-hash", (string input) =>
 .WithName("DemoCodeQlWeakHash")
 .WithTags("Security Demo");
 
+app.MapGet("/demo/codeql-code-quality", () =>
+{
+    var score = 0;
+    score = 100;
+
+    try
+    {
+        int.Parse("not-a-number");
+    }
+    catch
+    {
+    }
+
+    if (score == score)
+    {
+        var stream = File.OpenRead("appsettings.json");
+
+        return Results.Ok(new
+        {
+            message = "This endpoint intentionally contains code quality issues",
+            length = stream.Length
+        });
+    }
+
+    return Results.Ok(new
+    {
+        message = "Unreachable branch"
+    });
+})
+.WithName("DemoCodeQlCodeQuality")
+.WithTags("Security Demo");
+
 app.MapQuestEndpoints();
 
 app.Run();
