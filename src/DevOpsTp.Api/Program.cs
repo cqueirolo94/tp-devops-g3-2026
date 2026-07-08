@@ -56,6 +56,7 @@ builder.Services.AddOpenTelemetry()
     });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
@@ -81,6 +82,7 @@ app.UseExceptionHandler(exceptionHandlerApp =>
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.MapControllers();
 
 app.MapGet("/", (IWebHostEnvironment environment) =>
 {
