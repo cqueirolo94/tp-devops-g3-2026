@@ -1,6 +1,7 @@
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Microsoft.OpenApi.Any;
 using DevOpsTp.Api.Quests;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -161,7 +162,22 @@ app.MapGet("/zap-demo/reflected-xss", (string payload) =>
         "text/html");
 })
 .WithName("ZapDemoReflectedXss")
-.WithTags("Security Demo");
+.WithTags("Security Demo")
+.Produces(StatusCodes.Status200OK, contentType: "text/html")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Reflected HTML endpoint for ZAP demo";
+    operation.Description = "Intentionally reflects the payload query parameter in an HTML response so OWASP ZAP can detect it during dynamic scanning.";
+
+    var payloadParameter = operation.Parameters.FirstOrDefault(parameter => parameter.Name == "payload");
+    if (payloadParameter is not null)
+    {
+        payloadParameter.Description = "HTML payload reflected in the response body.";
+        payloadParameter.Example = new OpenApiString("<script>alert(1)</script>");
+    }
+
+    return operation;
+});
 
 app.MapQuestEndpoints();
 
