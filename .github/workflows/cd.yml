@@ -97,8 +97,7 @@ jobs:
             -f openapi \
             -r zap-report.html \
             -J zap-report.json \
-            -w zap-report.md \
-            -I
+            -w zap-report.md
 
       - name: Subir reporte ZAP
         if: always()

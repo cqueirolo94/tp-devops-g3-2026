@@ -154,6 +154,15 @@ app.MapGet("/diagnostics/slow", async () =>
 .WithName("SimulateSlowRequest")
 .WithTags("Diagnostics");
 
+app.MapGet("/zap-demo/reflected-xss", (string payload) =>
+{
+    return Results.Content(
+        $"<html><body><h1>Search results</h1><div>{payload}</div></body></html>",
+        "text/html");
+})
+.WithName("ZapDemoReflectedXss")
+.WithTags("Security Demo");
+
 app.MapQuestEndpoints();
 
 app.Run();
