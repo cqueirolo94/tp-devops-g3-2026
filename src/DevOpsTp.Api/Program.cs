@@ -164,8 +164,9 @@ app.MapGet("/demo/zap-reflected-input", (string input) =>
 .WithName("DemoZapReflectedInput")
 .WithTags("Security Demo");
 
-app.MapGet("/demo/codeql-command-injection", (string command) =>
+app.MapGet("/demo/codeql-command-injection", (HttpContext context) =>
 {
+    var command = context.Request.Query["command"].ToString();
     var process = Process.Start(new ProcessStartInfo
     {
         FileName = "/bin/sh",
@@ -180,8 +181,9 @@ app.MapGet("/demo/codeql-command-injection", (string command) =>
 .WithName("DemoCodeQlCommandInjection")
 .WithTags("Security Demo");
 
-app.MapGet("/demo/codeql-path-traversal", (string path) =>
+app.MapGet("/demo/codeql-path-traversal", (HttpContext context) =>
 {
+    var path = context.Request.Query["path"].ToString();
     var content = File.ReadAllText(path);
 
     return Results.Text(content, "text/plain");
