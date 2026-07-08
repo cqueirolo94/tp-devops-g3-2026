@@ -2,6 +2,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using DevOpsTp.Api.Quests;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -176,6 +178,39 @@ app.MapGet("/demo/codeql-command-injection", (string command) =>
     return Results.Text(output, "text/plain");
 })
 .WithName("DemoCodeQlCommandInjection")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-path-traversal", (string path) =>
+{
+    var content = File.ReadAllText(path);
+
+    return Results.Text(content, "text/plain");
+})
+.WithName("DemoCodeQlPathTraversal")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-insecure-random", () =>
+{
+    var token = new Random().Next(100000, 999999);
+
+    return Results.Ok(new
+    {
+        resetToken = token
+    });
+})
+.WithName("DemoCodeQlInsecureRandom")
+.WithTags("Security Demo");
+
+app.MapGet("/demo/codeql-weak-hash", (string input) =>
+{
+    var hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+
+    return Results.Ok(new
+    {
+        hash = Convert.ToHexString(hash)
+    });
+})
+.WithName("DemoCodeQlWeakHash")
 .WithTags("Security Demo");
 
 app.MapQuestEndpoints();
